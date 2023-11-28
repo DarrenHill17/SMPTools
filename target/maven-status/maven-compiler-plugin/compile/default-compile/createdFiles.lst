@@ -2,6 +2,7 @@ org\phlyer\smptools\Waypoints\WaypointCommand$2.class
 org\phlyer\smptools\Waypoints\Waypoint.class
 org\phlyer\smptools\Waypoints\WaypointDataType.class
 org\phlyer\smptools\SMPTools.class
+org\phlyer\smptools\AdminCommands\ClearPlayerPDC.class
 org\phlyer\smptools\Waypoints\WaypointCommand.class
 org\phlyer\smptools\Waypoints\WaypointGUIListener.class
 org\phlyer\smptools\Waypoints\WaypointCommand$1.class

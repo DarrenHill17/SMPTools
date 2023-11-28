@@ -4,8 +4,9 @@ import java.io.Serializable;
 
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
-public class Waypoint implements Serializable {
+public class Waypoint implements Serializable, Comparable {
     private final String name;
     private final int[] coordinates;
     private String dimension;
@@ -37,5 +38,11 @@ public class Waypoint implements Serializable {
 
     public String toString(){
         return name + " " + coordinates.toString() + " " + dimension;
+    }
+
+    @Override
+    public int compareTo(@NotNull Object o) {
+        String compareName = ((Waypoint) o).getName();
+        return this.name.compareTo(compareName);
     }
 }

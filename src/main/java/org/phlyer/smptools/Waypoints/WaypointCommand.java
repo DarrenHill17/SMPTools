@@ -15,12 +15,11 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.phlyer.smptools.SMPTools;
-
-import javax.xml.stream.events.Namespace;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class WaypointCommand implements CommandExecutor {
     private static final NamespacedKey waypointArrayKey = new NamespacedKey(SMPTools.getPlugin(SMPTools.class), "waypoint_array");
@@ -45,6 +44,7 @@ public class WaypointCommand implements CommandExecutor {
     }
 
     public static void menuPage(Player player, int pageNumber){
+        convertOldWaypoints(player);
         currentPage = pageNumber;
         ArrayList<Waypoint> waypoints = getWaypoints(player);
         Inventory inventory = Bukkit.createInventory(player, 9 * 6, Component.text("Waypoint Menu").decorate(TextDecoration.BOLD).color(TextColor.color(0x00AA00)));
@@ -123,7 +123,6 @@ public class WaypointCommand implements CommandExecutor {
             createInitialWaypointData(player);
         }
         ArrayList<Waypoint> waypoints = player.getPersistentDataContainer().get(waypointArrayKey, new WaypointDataType());
-        System.out.println(waypoints);
         assert waypoints != null;
         return waypoints;
     }
@@ -134,39 +133,7 @@ public class WaypointCommand implements CommandExecutor {
     }
 
     public static void createInitialWaypointData(Player player){
-        ArrayList<Waypoint> waypoints = new ArrayList<Waypoint>(){
-            {
-                add(new Waypoint("Test1", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test2", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test3", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test4", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test5", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test6", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test7", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test8", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test9", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test10", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test11", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test12", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test13", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test14", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test15", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test16", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test17", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test18", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test19", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test20", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test21", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test22", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test23", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test24", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test25", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test26", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test27", new int[]{1, 2, 3}, World.Environment.NORMAL));
-                add(new Waypoint("Test28", new int[]{1, 2, 3}, World.Environment.NORMAL));
-
-            }
-        };
+        ArrayList<Waypoint> waypoints = new ArrayList<>();
         player.getPersistentDataContainer().set(waypointArrayKey, new WaypointDataType(), waypoints);
     }
 
@@ -181,6 +148,10 @@ public class WaypointCommand implements CommandExecutor {
 
     public static void confirmDeleteAllWaypoints(Player player, Component[] options){
         confirmationPage(player, options, "DeleteAllConfirmationPage");
+    }
+
+    public static void confirmDeleteSpecificWaypoints(Player player, Component[] options){
+        confirmationPage(player, options, "DeleteSpecificConfirmationPage");
     }
 
     private static void confirmationPage(Player player, Component[] options, String metadata){
@@ -206,8 +177,7 @@ public class WaypointCommand implements CommandExecutor {
     public static void newWaypointPage(Player player, String waypointName){
         Inventory inventory = Bukkit.createInventory(player, 9 * 3, Component.text("New Waypoint"));
 
-        // 11, 13, 15
-        ItemStack nameSign = new ItemStack(Material.OAK_SIGN);
+        ItemStack nameSign = new ItemStack(Material.NAME_TAG);
         ItemMeta nameSignMeta = nameSign.getItemMeta();
         nameSignMeta.displayName(Component.text(waypointName).decoration(TextDecoration.ITALIC, false));
         nameSign.setItemMeta(nameSignMeta);
@@ -226,12 +196,106 @@ public class WaypointCommand implements CommandExecutor {
         inventory.setItem(15, customLocation);
 
         ItemStack closePage = new ItemStack(Material.BARRIER);
-        ItemMeta closePageMeta = customLocation.getItemMeta();
+        ItemMeta closePageMeta = closePage.getItemMeta();
         closePageMeta.displayName(Component.text("Close").decoration(TextDecoration.ITALIC, false).color(TextColor.color(0xFFFFFF)));
         closePage.setItemMeta(closePageMeta);
         inventory.setItem(26, closePage);
 
         player.openInventory(inventory);
         player.setMetadata("OpenedGUI", new FixedMetadataValue(SMPTools.getInstance(), "NewWaypointPage"));
+    }
+
+    public static boolean waypointNameExists(Player player, String name){
+        ArrayList<Waypoint> waypoints = player.getPersistentDataContainer().get(waypointArrayKey, new WaypointDataType());
+        for (Waypoint waypoint : waypoints){
+            if (waypoint.getName().equalsIgnoreCase(name)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static void addNewWaypoint(Player player, Waypoint waypoint){
+        ArrayList<Waypoint> waypoints = player.getPersistentDataContainer().get(waypointArrayKey, new WaypointDataType());
+        assert waypoints != null;
+        waypoints.add(waypoint);
+        Collections.sort(waypoints);
+        player.getPersistentDataContainer().set(waypointArrayKey, new WaypointDataType(), waypoints);
+    }
+
+    public static void waypointPage(Player player, Waypoint waypoint){
+        Inventory inventory = Bukkit.createInventory(player, 9 * 3, Component.text("Waypoint: " + waypoint.getName()));
+
+        ItemStack sendToPlayer = new ItemStack(Material.ELYTRA);
+        ItemMeta sendToPlayerMeta = sendToPlayer.getItemMeta();
+        sendToPlayerMeta.displayName(Component.text("Send to Player").decoration(TextDecoration.ITALIC, false).color(TextColor.color(0xFFFFFF)));
+        sendToPlayer.setItemMeta(sendToPlayerMeta);
+        inventory.setItem(11, sendToPlayer);
+
+        ItemStack location = new ItemStack(Material.MAP);
+        ItemMeta locationMeta = location.getItemMeta();
+        locationMeta.displayName(Component.text(waypoint.getCoordinates()[0] + " " + waypoint.getCoordinates()[1] + " " + waypoint.getCoordinates()[2]).decoration(TextDecoration.ITALIC, false));
+        TextColor color = TextColor.color(0xFFFFFF);
+        switch (waypoint.getDimension()){
+            case "Overworld": color = TextColor.color(0x00AA00);
+            break;
+            case "Nether": color = TextColor.color(0xAA0000);
+            break;
+            case "End": color = TextColor.color(0xAA00AA);
+            break;
+        }
+        TextColor finalColor = color;
+        ArrayList<Component> loreList = new ArrayList<Component>(){
+            {
+                add(Component.text(waypoint.getDimension()).color(finalColor));
+            }
+        };
+        locationMeta.lore(loreList);
+        location.setItemMeta(locationMeta);
+        inventory.setItem(13, location);
+
+        ItemStack deleteWaypoint = new ItemStack(Material.LAVA_BUCKET);
+        ItemMeta deleteWaypointMeta = deleteWaypoint.getItemMeta();
+        deleteWaypointMeta.displayName(Component.text("Delete Waypoint").decoration(TextDecoration.ITALIC, false).color(TextColor.color(0xAA0000)));
+        deleteWaypoint.setItemMeta(deleteWaypointMeta);
+        inventory.setItem(11, deleteWaypoint);
+
+        ItemStack closePage = new ItemStack(Material.BARRIER);
+        ItemMeta closePageMeta = closePage.getItemMeta();
+        closePageMeta.displayName(Component.text("Close").decoration(TextDecoration.ITALIC, false).color(TextColor.color(0xFFFFFF)));
+        closePage.setItemMeta(closePageMeta);
+        inventory.setItem(26, closePage);
+
+        player.openInventory(inventory);
+        player.setMetadata("OpenedGUI", new FixedMetadataValue(SMPTools.getInstance(), "WaypointPage"));
+    }
+
+    public static Waypoint getClickedWaypoint(Player player, int clickedIndex){
+        ArrayList<Waypoint> waypoints = player.getPersistentDataContainer().get(waypointArrayKey, new WaypointDataType());
+        assert waypoints != null;
+        return waypoints.get(21*currentPage + clickedIndex);
+    }
+
+    public static void deleteWaypoint(Player player, int waypointIndex){
+        ArrayList<Waypoint> waypoints = player.getPersistentDataContainer().get(waypointArrayKey, new WaypointDataType());
+        assert waypoints != null;
+        waypoints.remove(waypointIndex);
+        Collections.sort(waypoints);
+        player.getPersistentDataContainer().set(waypointArrayKey, new WaypointDataType(), waypoints);
+    }
+
+    private static void convertOldWaypoints(Player player){
+        if (player.getPersistentDataContainer().getKeys().contains(new NamespacedKey(SMPTools.getPlugin(SMPTools.class), "saved-waypoint-keys"))){
+            String[] keys = player.getPersistentDataContainer().get(new NamespacedKey(SMPTools.getPlugin(SMPTools.class), "saved-waypoint-keys"), PersistentDataType.STRING).split("#");
+            for (String key : keys){
+                if (key != null && !(key.isEmpty())){
+                    String[] coords = player.getPersistentDataContainer().get(new NamespacedKey(SMPTools.getPlugin(SMPTools.class), key), PersistentDataType.STRING).split("#");
+                    int[] coordsInts = {Integer.parseInt(coords[0]), Integer.parseInt(coords[1]), Integer.parseInt(coords[2])};
+                    addNewWaypoint(player, new Waypoint(key, coordsInts, World.Environment.NORMAL));
+                    player.getPersistentDataContainer().remove(new NamespacedKey(SMPTools.getPlugin(SMPTools.class), key));
+                }
+            }
+            player.getPersistentDataContainer().remove(new NamespacedKey(SMPTools.getPlugin(SMPTools.class), "saved-waypoint-keys"));
+        }
     }
 }

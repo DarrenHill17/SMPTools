@@ -7,3 +7,5 @@ commands:
     aliases: wp
     description: Opens the Waypoint GUI.
     usage: /waypoint
+  pdc:
+    permissions: op

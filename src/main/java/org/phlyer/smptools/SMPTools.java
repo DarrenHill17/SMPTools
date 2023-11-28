@@ -1,6 +1,7 @@
 package org.phlyer.smptools;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.phlyer.smptools.AdminCommands.ClearPlayerPDC;
 import org.phlyer.smptools.Waypoints.WaypointCommand;
 import org.phlyer.smptools.Waypoints.WaypointGUIListener;
 
@@ -10,6 +11,7 @@ public final class SMPTools extends JavaPlugin {
     public void onEnable() {
         // Commands
         getCommand("waypoint").setExecutor(new WaypointCommand());
+        getCommand("pdc").setExecutor(new ClearPlayerPDC());
 
         // Listeners
         getServer().getPluginManager().registerEvents(new WaypointGUIListener(), this);
