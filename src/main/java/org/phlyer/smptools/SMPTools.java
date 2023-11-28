@@ -1,17 +1,26 @@
 package org.phlyer.smptools;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.phlyer.smptools.Waypoints.WaypointCommand;
+import org.phlyer.smptools.Waypoints.WaypointGUIListener;
 
 public final class SMPTools extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
+        // Commands
+        getCommand("waypoint").setExecutor(new WaypointCommand());
 
+        // Listeners
+        getServer().getPluginManager().registerEvents(new WaypointGUIListener(), this);
     }
 
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+    }
+
+    public static SMPTools getInstance(){
+        return getPlugin(SMPTools.class);
     }
 }

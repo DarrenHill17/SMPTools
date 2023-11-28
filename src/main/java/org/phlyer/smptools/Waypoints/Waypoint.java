@@ -6,11 +6,13 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 public class Waypoint implements Serializable {
-    private int[] coordinates = new int[3];
+    private final String name;
+    private final int[] coordinates;
     private String dimension;
 
-    public Waypoint(int[] coordinates, World.Environment environment){
+    public Waypoint(String name, int[] coordinates, World.Environment environment){
         this.coordinates = coordinates;
+        this.name = name;
         switch (environment){
             case NORMAL: dimension = "Overworld";
             break;
@@ -27,5 +29,13 @@ public class Waypoint implements Serializable {
 
     public String getDimension(){
         return dimension;
+    }
+
+    public String getName(){
+        return name;
+    }
+
+    public String toString(){
+        return name + " " + coordinates.toString() + " " + dimension;
     }
 }
