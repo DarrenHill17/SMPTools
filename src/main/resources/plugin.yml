@@ -1,0 +1,4 @@
+name: SMPTools
+version: '${project.version}'
+main: org.phlyer.smptools.SMPTools
+api-version: '1.20'
