@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,7 @@ import java.util.Collections;
 
 public class WaypointCommand implements CommandExecutor {
     private static final NamespacedKey waypointArrayKey = new NamespacedKey(SMPTools.getPlugin(SMPTools.class), "waypoint_array");
-    private static int currentPage;
+    private static int currentPage, currentPlayerPage;
 
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
@@ -47,14 +48,16 @@ public class WaypointCommand implements CommandExecutor {
         convertOldWaypoints(player);
         currentPage = pageNumber;
         ArrayList<Waypoint> waypoints = getWaypoints(player);
-        Inventory inventory = Bukkit.createInventory(player, 9 * 6, Component.text("Waypoint Menu").decorate(TextDecoration.BOLD).color(TextColor.color(0x00AA00)));
+        Inventory inventory = Bukkit.createInventory(player, 9 * 6, Component.text("Waypoint Menu ").decoration(TextDecoration.BOLD, true)
+                .color(TextColor.color(0x00AA00))
+                .append(Component.text("(Page " + (currentPage+1) + ")").color(TextColor.color(0x444444)).decoration(TextDecoration.BOLD, false)));
 
-        // Sign
-        ItemStack pageNumberSign = new ItemStack(Material.OAK_SIGN);
-        ItemMeta pageNumberSignMeta = pageNumberSign.getItemMeta();
-        pageNumberSignMeta.displayName(Component.text("Page " + String.valueOf(pageNumber+1)).decoration(TextDecoration.ITALIC, false));
-        pageNumberSign.setItemMeta(pageNumberSignMeta);
-        inventory.setItem(49, pageNumberSign);
+        // Torch
+        ItemStack numberTorch = new ItemStack(Material.TORCH);
+        ItemMeta numberTorchMeta = numberTorch.getItemMeta();
+        numberTorchMeta.displayName(Component.text(waypoints.size() + " waypoints stored").decoration(TextDecoration.ITALIC, false));
+        numberTorch.setItemMeta(numberTorchMeta);
+        inventory.setItem(49, numberTorch);
 
         // New Waypoint
         ItemStack addWaypointBlock = new ItemStack(Material.LIME_TERRACOTTA);
@@ -146,6 +149,10 @@ public class WaypointCommand implements CommandExecutor {
         return currentPage;
     }
 
+    public static int getCurrentPlayerPage(){
+        return currentPlayerPage;
+    }
+
     public static void confirmDeleteAllWaypoints(Player player, Component[] options){
         confirmationPage(player, options, "DeleteAllConfirmationPage");
     }
@@ -230,7 +237,7 @@ public class WaypointCommand implements CommandExecutor {
         ItemMeta sendToPlayerMeta = sendToPlayer.getItemMeta();
         sendToPlayerMeta.displayName(Component.text("Send to Player").decoration(TextDecoration.ITALIC, false).color(TextColor.color(0xFFFFFF)));
         sendToPlayer.setItemMeta(sendToPlayerMeta);
-        inventory.setItem(11, sendToPlayer);
+        inventory.setItem(14, sendToPlayer);
 
         ItemStack location = new ItemStack(Material.MAP);
         ItemMeta locationMeta = location.getItemMeta();
@@ -252,13 +259,19 @@ public class WaypointCommand implements CommandExecutor {
         };
         locationMeta.lore(loreList);
         location.setItemMeta(locationMeta);
-        inventory.setItem(13, location);
+        inventory.setItem(10, location);
+
+        ItemStack renameWaypoint = new ItemStack(Material.NAME_TAG);
+        ItemMeta renameWaypointMeta = renameWaypoint.getItemMeta();
+        renameWaypointMeta.displayName(Component.text("Rename Waypoint").decoration(TextDecoration.ITALIC, false));
+        renameWaypoint.setItemMeta(renameWaypointMeta);
+        inventory.setItem(12, renameWaypoint);
 
         ItemStack deleteWaypoint = new ItemStack(Material.LAVA_BUCKET);
         ItemMeta deleteWaypointMeta = deleteWaypoint.getItemMeta();
         deleteWaypointMeta.displayName(Component.text("Delete Waypoint").decoration(TextDecoration.ITALIC, false).color(TextColor.color(0xAA0000)));
         deleteWaypoint.setItemMeta(deleteWaypointMeta);
-        inventory.setItem(11, deleteWaypoint);
+        inventory.setItem(16, deleteWaypoint);
 
         ItemStack closePage = new ItemStack(Material.BARRIER);
         ItemMeta closePageMeta = closePage.getItemMeta();
@@ -297,5 +310,111 @@ public class WaypointCommand implements CommandExecutor {
             }
             player.getPersistentDataContainer().remove(new NamespacedKey(SMPTools.getPlugin(SMPTools.class), "saved-waypoint-keys"));
         }
+    }
+
+    public static void onlinePlayers(Player player, int pageNumber){
+        currentPlayerPage = pageNumber;
+        Inventory inventory = Bukkit.createInventory(player, 9 * 6, Component.text("Select Recipient (Page " + (currentPlayerPage+1) + ")"));
+
+        Player[] onlinePlayersArray = Bukkit.getOnlinePlayers().toArray(new Player[Bukkit.getOnlinePlayers().toArray().length]);
+
+        ItemStack closePage = new ItemStack(Material.BARRIER);
+        ItemMeta closePageMeta = closePage.getItemMeta();
+        closePageMeta.displayName(Component.text("Close").decoration(TextDecoration.ITALIC, false).color(TextColor.color(0xFFFFFF)));
+        closePage.setItemMeta(closePageMeta);
+        inventory.setItem(53, closePage);
+
+        // Torch
+        ItemStack numberTorch = new ItemStack(Material.TORCH);
+        ItemMeta numberTorchMeta = numberTorch.getItemMeta();
+        numberTorchMeta.displayName(Component.text(onlinePlayersArray.length + " players online").decoration(TextDecoration.ITALIC, false));
+        numberTorch.setItemMeta(numberTorchMeta);
+        inventory.setItem(49, numberTorch);
+
+        int totalNumberOfPages = (int) Math.ceil(onlinePlayersArray.length/28.0);
+
+        if (pageNumber != 0){
+            ItemStack pageBack = new ItemStack(Material.ARROW);
+            ItemMeta meta = pageBack.getItemMeta();
+            meta.displayName(Component.text("Page " + String.valueOf(pageNumber)));
+            pageBack.setItemMeta(meta);
+            inventory.setItem(48, pageBack);
+        }
+
+        if (pageNumber < totalNumberOfPages - 1){
+            ItemStack pageForward = new ItemStack(Material.ARROW);
+            ItemMeta meta = pageForward.getItemMeta();
+            meta.displayName(Component.text("Page " + String.valueOf(pageNumber+2)));
+            pageForward.setItemMeta(meta);
+            inventory.setItem(50, pageForward);
+        }
+
+        ArrayList<Player> currentOnlinePlayersPage = new ArrayList<>();
+        for (int i = pageNumber * 28; i < (pageNumber + 1) * 28; i++){
+            if (i >= onlinePlayersArray.length) break;
+            currentOnlinePlayersPage.add(onlinePlayersArray[i]);
+        }
+
+        int i = 0;
+        int slot = 10 + i;
+        for (Player onlinePlayer : currentOnlinePlayersPage){
+            if (onlinePlayer.displayName() != player.displayName()){
+                ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
+                SkullMeta skullmeta = (SkullMeta) skull.getItemMeta();
+                skullmeta.setOwningPlayer(onlinePlayer.getPlayer());
+                ArrayList<Integer> forbiddenSlots = new ArrayList<Integer>(){
+                    {
+                        add(17);
+                        add(26);
+                        add(35);
+                        add(44);
+                    }
+                };
+                if (forbiddenSlots.contains(slot) && slot != 44) slot+=2;
+                else if (slot == 44) break;
+
+                skullmeta.displayName(onlinePlayer.displayName());
+                skull.setItemMeta(skullmeta);
+                inventory.setItem(slot, skull);
+                slot++;
+            }
+            else {
+                ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
+                SkullMeta skullmeta = (SkullMeta) skull.getItemMeta();
+                skullmeta.setOwningPlayer(onlinePlayer.getPlayer());
+                ArrayList<Integer> forbiddenSlots = new ArrayList<Integer>(){
+                    {
+                        add(17);
+                        add(26);
+                        add(35);
+                        add(44);
+                    }
+                };
+                if (forbiddenSlots.contains(slot) && slot != 44) slot+=2;
+                else if (slot == 44) break;
+
+                skullmeta.displayName(onlinePlayer.displayName());
+                skull.setItemMeta(skullmeta);
+                inventory.setItem(slot, skull);
+                slot++;
+            }
+        }
+
+        player.openInventory(inventory);
+        player.setMetadata("OpenedGUI", new FixedMetadataValue(SMPTools.getInstance(), "RecipientPage"));
+    }
+
+    public static boolean sendWaypoint(int recipientIndex, Waypoint waypoint){
+        Player recipient = Bukkit.getOnlinePlayers().toArray(new Player[Bukkit.getOnlinePlayers().toArray().length])[recipientIndex];
+        ArrayList<Waypoint> waypoints = recipient.getPersistentDataContainer().get(waypointArrayKey, new WaypointDataType());
+        for (Waypoint tempWaypoint : waypoints){
+            if (tempWaypoint.getName().equalsIgnoreCase(waypoint.getName())) {
+                return false;
+            }
+        }
+        waypoints.add(waypoint);
+        Collections.sort(waypoints);
+        recipient.getPersistentDataContainer().set(waypointArrayKey, new WaypointDataType(), waypoints);
+        return true;
     }
 }
