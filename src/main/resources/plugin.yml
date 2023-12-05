@@ -6,6 +6,9 @@ commands:
   waypoint:
     aliases: wp
     description: Opens the Waypoint GUI.
-    usage: /waypoint
+    usage: "/command"
   pdc:
     permissions: op
+  coords:
+    description: Broadcasts your coordinates.
+    usage: "/command <arg>"

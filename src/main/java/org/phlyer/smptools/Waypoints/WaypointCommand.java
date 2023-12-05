@@ -20,6 +20,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.phlyer.smptools.SMPTools;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 public class WaypointCommand implements CommandExecutor {
@@ -378,34 +379,17 @@ public class WaypointCommand implements CommandExecutor {
                 inventory.setItem(slot, skull);
                 slot++;
             }
-            else {
-                ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
-                SkullMeta skullmeta = (SkullMeta) skull.getItemMeta();
-                skullmeta.setOwningPlayer(onlinePlayer.getPlayer());
-                ArrayList<Integer> forbiddenSlots = new ArrayList<Integer>(){
-                    {
-                        add(17);
-                        add(26);
-                        add(35);
-                        add(44);
-                    }
-                };
-                if (forbiddenSlots.contains(slot) && slot != 44) slot+=2;
-                else if (slot == 44) break;
-
-                skullmeta.displayName(onlinePlayer.displayName());
-                skull.setItemMeta(skullmeta);
-                inventory.setItem(slot, skull);
-                slot++;
-            }
         }
 
         player.openInventory(inventory);
         player.setMetadata("OpenedGUI", new FixedMetadataValue(SMPTools.getInstance(), "RecipientPage"));
     }
 
-    public static boolean sendWaypoint(int recipientIndex, Waypoint waypoint){
-        Player recipient = Bukkit.getOnlinePlayers().toArray(new Player[Bukkit.getOnlinePlayers().toArray().length])[recipientIndex];
+    public static boolean sendWaypoint(Player sender, String displayName, Waypoint waypoint){
+        Player recipient = Bukkit.getPlayer(displayName);
+        if (recipient == null){
+            return false;
+        }
         ArrayList<Waypoint> waypoints = recipient.getPersistentDataContainer().get(waypointArrayKey, new WaypointDataType());
         for (Waypoint tempWaypoint : waypoints){
             if (tempWaypoint.getName().equalsIgnoreCase(waypoint.getName())) {

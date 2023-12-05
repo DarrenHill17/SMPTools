@@ -22,7 +22,7 @@ import java.util.Objects;
 public class WaypointGUIListener implements Listener {
     private String createWaypointLastName = "Waypoint Name";
     private int lastWaypointOpenedWaypointIndex;
-    private int lastRecipientSelected;
+    private String lastRecipientSelected;
 
     @EventHandler
     public void onClick(InventoryClickEvent event){
@@ -137,18 +137,13 @@ public class WaypointGUIListener implements Listener {
                     WaypointCommand.menuPage(player, WaypointCommand.getCurrentPage());
                 }
                 else if (event.getClickedInventory().getItem(event.getSlot()).getType() == Material.PLAYER_HEAD){
-                    int clickedIndex;
-                    if (event.getSlot() <= 16) clickedIndex = event.getSlot() - 10;
-                    else if (event.getSlot() <= 25) clickedIndex = event.getSlot() - 12;
-                    else if (event.getSlot() <= 34) clickedIndex = event.getSlot() - 14;
-                    else clickedIndex = event.getSlot() - 16;
-                    System.out.println(clickedIndex);
-                    lastRecipientSelected = 28*WaypointCommand.getCurrentPlayerPage() + clickedIndex;
-                    if (WaypointCommand.sendWaypoint(lastRecipientSelected, WaypointCommand.getClickedWaypoint(player, lastWaypointOpenedWaypointIndex))){
+                    lastRecipientSelected = event.getClickedInventory().getItem(event.getSlot()).getItemMeta().getDisplayName();
+                    if (WaypointCommand.sendWaypoint(player, lastRecipientSelected, WaypointCommand.getClickedWaypoint(player, lastWaypointOpenedWaypointIndex))){
                         player.sendMessage(Component.text("Waypoint " + WaypointCommand.getClickedWaypoint(player, lastWaypointOpenedWaypointIndex).getName() + " sent."));
                     }
                     else {
-                        player.sendMessage(Component.text("Unable to send waypoint as recipient already has a waypoint named " + WaypointCommand.getClickedWaypoint(player, lastWaypointOpenedWaypointIndex).getName() + "."));
+                        if (Bukkit.getPlayer(lastRecipientSelected) == null) player.sendMessage(Component.text(lastRecipientSelected + " is not online."));
+                        else player.sendMessage(Component.text("Unable to send waypoint as recipient already has a waypoint named " + WaypointCommand.getClickedWaypoint(player, lastWaypointOpenedWaypointIndex).getName() + "."));
                     }
                     WaypointCommand.menuPage(player, 0);
                 }
